@@ -1,0 +1,154 @@
+function INIT()
+solids={[1]=true}
+platform={[33]=true}
+p={
+ id=256,
+ x=8,
+	y=8,
+	vx=0,
+	vy=0,
+	vxmax=2,
+	colorkey=0,
+	scale=1,
+	flip=0,
+	rotate=0,
+	speed=0.5,
+	friction=0.1,
+	jump=-4,
+	grv=0.3,
+	grvmax=3,
+	onground=false,
+	candouble=false
+}
+end
+INIT()
+
+--MAIN FUNCTION
+function TIC()
+
+ move_player()
+
+ cls()
+	map()
+
+	draw_player()
+
+	print("p.onground:" ..b_t_n(p.onground),0,8)
+	print("p.candouble: "..b_t_n(p.candouble),0,16)
+	print("p.vx: "..p.vx,0,24)
+
+end
+
+--FUNCTIONS
+-->>>player Graphics
+function draw_player()
+ spr(p.id,p.x,p.y,p.colorkey,p.scale,p.flip,p.rotate)
+end
+
+-->>>player Movement
+function move_player()
+ if btn(2) then
+	 p.vx=p.vx-p.speed
+		p.flip=1
+		if p.vx<-p.vxmax then
+		 p.vx=-p.vxmax
+		end
+	elseif btn(3) then
+	 p.vx=p.vx+p.speed
+		p.flip=0
+		if p.vx>p.vxmax then
+		 p.vx=p.vxmax
+		end
+	else
+	 if p.vx<0 and not btn(2) then
+		 p.vx=p.vx+p.friction
+		elseif p.vx>0 and not btn(3) then
+		 p.vx=p.vx-p.friction
+		end
+		if p.flip==0 and p.vx<0
+		or p.flip==1 and p.vx>0 then
+		 p.vx=0
+		end
+	end
+-->>>player jump
+if p.onground==true and btnp(4) then
+ p.vy=p.jump
+	sfx(0,50,5 )
+	if p.vx>0 then
+	 p.vx=p.vxmax
+	end
+	if p.vx<0 then
+	 p.vx=-p.vxmax
+	end
+elseif p.onground==false
+and p.candouble==true
+and btnp(4) then
+	p.vy=p.jump
+ p.candouble=false
+	sfx(0,30,5)
+end
+collision_player()
+p.x=p.x+p.vx
+p.y=p.y+p.vy
+end
+
+function collision_player()
+-->>>player collision linksoben,rechtsoben,rechtsunten,linksunten
+ if check_collision(solids,p.x+p.vx,p.y+p.vy)
+ or check_collision(solids,p.x+7+p.vx,p.y+p.vy)
+ or check_collision(solids,p.x+7+p.vx,p.y+7+p.vy)
+ or check_collision(solids,p.x+p.vx,p.y+7+p.vy) then
+		p.vx=0
+	end
+-->>>player collision ceiling
+	if p.vy<0 then
+	if check_collision(solids,p.x+p.vx,p.y+p.vy)
+ or check_collision(solids,p.x+7+p.vx,p.y+p.vy) then
+	 p.vy=0
+	end
+	end
+	-->>>gravity
+	if check_collision(solids,p.x+p.vx,p.y+8+p.vy)
+	or check_collision(solids,p.x+7+p.vx,p.y+8+p.vy) then
+	 p.vy=0
+	 p.onground=true
+		p.candouble=true
+	else
+	 p.vy=p.vy+p.grv
+		p.onground=false
+  if p.vy>p.grvmax then
+		 p.vy=p.grvmax
+		end
+	end
+	collision_player_platform()
+end
+
+function collision_player_platform()
+if check_collision(platform,p.x+p.vx,p.y+p.vy)
+ or check_collision(platform,p.x+7+p.vx,p.y+p.vy)
+ or check_collision(platform,p.x+7+p.vx,p.y+7+p.vy)
+ or check_collision(platform,p.x+p.vx,p.y+7+p.vy) then
+		p.vx=0
+	end
+	if p.vy>0 then
+	 if check_collision(platform,p.x+p.vx,p.y+8+p.vy)
+	 or check_collision(platform,p.x+7+p.vx,p.y+8+p.vy) then
+		 if not btnp(1) then
+	   p.vy=0
+		  p.onground=true
+		  p.candouble=true
+			elseif btnp(1) then
+			 p.vy=8
+			end
+		end
+	end
+end
+
+--MISC FUNCTION
+function b_t_n(val)
+ return val and 1 or 0
+end
+
+function check_collision(typ,x,y)
+ return typ[mget((x)//8,(y)//8)]
+end
