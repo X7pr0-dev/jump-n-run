@@ -1,6 +1,32 @@
 function INIT()
-solids={[1]=true}
-platform={[33]=true}
+state_start=0
+state_play=10
+state_end=20
+
+GAME_STATE=state_play
+
+scr_x=240
+scr_y=136
+
+t=0 --frame count
+cam={x=120,y=68}
+
+solids={
+[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,
+[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,
+[11]=true,[12]=true,[13]=true,[14]=true,[15]=true,
+[16]=true,[17]=true,[18]=true,[19]=true,[20]=true,
+[21]=true,[22]=true,[23]=true,[24]=true,[25]=true,
+[26]=true,[27]=true,[28]=true,[29]=true,[30]=true,
+[31]=true,[32]=true,[33]=true,[34]=true,[35]=true,
+[36]=true,[37]=true,[38]=true,[39]=true,[40]=true,
+[41]=true,[42]=true,[43]=true,[44]=true,[45]=true,
+[46]=true,[47]=true,[48]=true,[49]=true,[50]=true,
+[51]=true,[52]=true,[53]=true,[54]=true,[55]=true,
+[56]=true,[57]=true,[58]=true,[59]=true}
+
+platform={[81]=true}
+
 p={
  id=256,
  x=8,
@@ -18,129 +44,207 @@ p={
 	grv=0.3,
 	grvmax=3,
 	onground=false,
-	candouble=false
+	candouble=false,
+	onwall=false,
+	anim=0,
+	animtime=1
 }
 end
 INIT()
 
 --MAIN FUNCTION
 function TIC()
-
- move_player()
-
  cls()
-	map()
-
-	draw_player()
-
-	print("p.onground:" ..b_t_n(p.onground),0,8)
-	print("p.candouble: "..b_t_n(p.candouble),0,16)
-	print("p.vx: "..p.vx,0,24)
-
+ if GAME_STATE==state_start then
+	
+	 doGameStart()
+		
+	elseif GAME_STATE==state_play then
+	
+	 doGamePlay()
+		
+	elseif GAME_STATE==state_end then
+	
+	 doGameEnd()
+		
+	end
 end
 
 --FUNCTIONS
+function doGameStart()
+ print("Willkommen",scr_x/2-32,scr_y/2-16)
+	print("press z",scr_x/2-24,scr_y/2-8)
+	
+	if btnp(4) then
+  GAME_STATE=state_play
+	end
+end
+
+function doGamePlay()
+	cls()
+ camera()
+ draw_map()
+	
+ move_player()
+	animation()
+	draw_player()
+	
+	print("p.onground:" ..b_t_n(p.onground),0,8)
+	print("p.candouble: "..b_t_n(p.candouble),0,8*2)
+	print("p.onwall:" ..b_t_n(p.onwall),0,8*3)
+	print("p.vx: "..p.vx,0,8*4)
+	print("p.vy: "..p.vy,0,8*5)
+
+		
+	print("press x",scr_x/2-24,scr_y-8)
+	if btnp(5) then
+  GAME_STATE=state_end
+	end
+end
+
+function doGameEnd()
+ print("GAME OVER, BITCH!",scr_x/2-32,scr_y/2-16)
+	print("press z",scr_x/2-24,scr_y/2-8)
+	
+	if btnp(4) then
+  GAME_STATE=state_start
+	end
+end
+
+----------------------------------------
+function camera()
+ cam.x=120-p.x
+	cam.y=120-p.y
+end
+
+function draw_map()
+ map(0,0,240,136,cam.x,cam.y-8*6)
+end
+
 -->>>player Graphics
 function draw_player()
- spr(p.id,p.x,p.y,p.colorkey,p.scale,p.flip,p.rotate)
+ spr(p.id+p.anim,p.x+cam.x,p.y+cam.y-8*6,p.colorkey,p.scale,p.flip,p.rotate)
 end
 
 -->>>player Movement
 function move_player()
- if btn(2) then
-	 p.vx=p.vx-p.speed
-		p.flip=1
-		if p.vx<-p.vxmax then
-		 p.vx=-p.vxmax
-		end
-	elseif btn(3) then
-	 p.vx=p.vx+p.speed
-		p.flip=0
-		if p.vx>p.vxmax then
-		 p.vx=p.vxmax
-		end
-	else
-	 if p.vx<0 and not btn(2) then
-		 p.vx=p.vx+p.friction
-		elseif p.vx>0 and not btn(3) then
-		 p.vx=p.vx-p.friction
-		end
-		if p.flip==0 and p.vx<0
-		or p.flip==1 and p.vx>0 then
-		 p.vx=0
-		end
+	
+	 if btn(2) then
+		 p.vx=p.vx-p.speed
+			p.flip=1
+			if p.vx<-p.vxmax then
+			 p.vx=-p.vxmax
+			end
+	 elseif btn(3) then
+		 p.vx=p.vx+p.speed
+			p.flip=0
+			if p.vx>p.vxmax then
+			 p.vx=p.vxmax
+			end
+	 else
+		 if p.vx<0 and not btn(2) then
+			 p.vx=p.vx+p.friction
+			elseif p.vx>0 and not btn(3) then
+			 p.vx=p.vx-p.friction
+			end
+			 if p.flip==0 and p.vx<0
+			 or p.flip==1 and p.vx>0 then
+			  p.vx=0
+			 end
 	end
--->>>player jump
-if p.onground==true and btnp(4) then
- p.vy=p.jump
-	sfx(0,50,5 )
-	if p.vx>0 then
-	 p.vx=p.vxmax
-	end
-	if p.vx<0 then
-	 p.vx=-p.vxmax
-	end
-elseif p.onground==false
-and p.candouble==true
-and btnp(4) then
-	p.vy=p.jump
- p.candouble=false
-	sfx(0,30,5)
-end
-collision_player()
-p.x=p.x+p.vx
-p.y=p.y+p.vy
+
+ collision_player()
+ player_physics()
+
+ p.x=p.x+p.vx
+ p.y=p.y+p.vy
 end
 
 function collision_player()
--->>>player collision linksoben,rechtsoben,rechtsunten,linksunten
- if check_collision(solids,p.x+p.vx,p.y+p.vy)
- or check_collision(solids,p.x+7+p.vx,p.y+p.vy)
- or check_collision(solids,p.x+7+p.vx,p.y+7+p.vy)
- or check_collision(solids,p.x+p.vx,p.y+7+p.vy) then
+
+ local topleft     = check_collision(solids,p.x+p.vx,p.y+p.vy)
+	local topright    = check_collision(solids,p.x+7+p.vx,p.y+p.vy)
+	local bottomleft  = check_collision(solids,p.x+p.vx,p.y+7+p.vy)
+	local bottomright = check_collision(solids,p.x+7+p.vx,p.y+7+p.vy)
+ 
+	local bottom      = check_collision(solids,p.x+p.vx,p.y+8+p.vy) or check_collision(solids,p.x+7+p.vx,p.y+8+p.vy)
+	local wallright   = check_collision(solids,p.x+8+p.vx,p.y+p.vy) or check_collision(solids,p.x+8+p.vx,p.y+7+p.vy)
+	local wallleft    = check_collision(solids,p.x-1+p.vx,p.y+p.vy) or check_collision(solids,p.x-1+p.vx,p.y+7+p.vy)
+	local ceiling     = check_collision(solids,p.x+p.vx,p.y-1+p.vy) or check_collision(solids,p.x+7+p.vx,p.y-1+p.vy)
+
+-->>>player generally collsion
+	if topleft 
+	or topright 
+	or bottomright 
+	or bottomleft then
 		p.vx=0
 	end
--->>>player collision ceiling
+
+-->>>player check top
 	if p.vy<0 then
-	if check_collision(solids,p.x+p.vx,p.y+p.vy)
- or check_collision(solids,p.x+7+p.vx,p.y+p.vy) then
+  if topleft
+  or topright then
 	 p.vy=0
+	 end
 	end
-	end
-	-->>>gravity
-	if check_collision(solids,p.x+p.vx,p.y+8+p.vy)
-	or check_collision(solids,p.x+7+p.vx,p.y+8+p.vy) then
-	 p.vy=0
-	 p.onground=true
-		p.candouble=true
-	else
-	 p.vy=p.vy+p.grv
-		p.onground=false
-  if p.vy>p.grvmax then
-		 p.vy=p.grvmax
+	
+	-->>>player check bottom
+	 if bottom then
+		 p.onground =true
+			p.candouble=true
+		else
+		 p.onground=false
 		end
-	end
-	collision_player_platform()
+		
+-->>>player check wallside
+	 if wallleft or wallright then
+		 p.onwall=true
+		else
+		 p.onwall=false
+		end
 end
 
-function collision_player_platform()
-if check_collision(platform,p.x+p.vx,p.y+p.vy)
- or check_collision(platform,p.x+7+p.vx,p.y+p.vy)
- or check_collision(platform,p.x+7+p.vx,p.y+7+p.vy)
- or check_collision(platform,p.x+p.vx,p.y+7+p.vy) then
-		p.vx=0
-	end
-	if p.vy>0 then
-	 if check_collision(platform,p.x+p.vx,p.y+8+p.vy)
-	 or check_collision(platform,p.x+7+p.vx,p.y+8+p.vy) then
-		 if not btnp(1) then
-	   p.vy=0
-		  p.onground=true
-		  p.candouble=true
-			elseif btnp(1) then
-			 p.vy=8
+function player_physics()
+-->>>gravity
+  if p.onground==false and p.onwall==false then
+			if p.vy>p.grvmax then
+			 p.vy=p.grvmax
+				else
+		  p.vy=p.vy+p.grv			
+			end
+		else
+		 p.vy=0
+		end
+
+--player jump handling
+	if p.onground==true and p.onwall==false then 
+	 if btnp(4) and not ceiling then
+		 p.vy=p.jump
+		end
+	elseif p.onground==true and p.onwall==true then
+	 if btnp(4) and not ceiling then
+		 p.vy=p.jump
+			if p.flip==1 then
+			 p.vx=p.vx+p.speed*6
+			else
+			 p.vx=p.vx-p.speed*6
 			end
 		end
+	end
+end
+
+function animation()
+	if p.vx~=0 and p.onground==true then
+  p.animtime=p.animtime-0.15
+		if p.animtime<0 then
+		 p.animtime=1
+		 p.anim=p.anim+1
+		end
+		if p.anim>=3 then
+		 p.anim=0
+		end
+	elseif p.vx==0 or p.onground==false then
+		 p.anim=0
 	end
 end
 
@@ -151,4 +255,4 @@ end
 
 function check_collision(typ,x,y)
  return typ[mget((x)//8,(y)//8)]
-end
+end 
